@@ -1,1 +1,164 @@
-index
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Arte AI</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 { color: #1a1a1a; margin-bottom: 20px; font-size: 24px; }
+        
+        p { color: #666; margin-bottom: 20px; }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus { border-color: #007bff; }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            width: 100%;
+        }
+
+        button:hover { background-color: #0056b3; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        #status { 
+            margin-top: 20px; 
+            min-height: 20px; 
+            font-weight: 500;
+        }
+        
+        #imagem-resultado {
+            margin-top: 25px;
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: none; /* Começa invisível */
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>✨ Gerador de Imagens AI</h1>
+        <p>Transforme suas ideias em arte usando o modelo FLUX.</p>
+        
+        <input type="text" id="promptInput" placeholder="Ex: Um astronauta andando de skate em Marte">
+        
+        <button onclick="gerarImagem()" id="btnGerar">Criar Imagem</button>
+        
+        <div id="status"></div>
+        <img id="imagem-resultado" src="" alt="Resultado da IA">
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO ---
+        // Já coloquei o seu link aqui. 
+        // IMPORTANTE: Se você reiniciar o Codespaces outro dia, esse link pode mudar!
+        const URL_DO_BACKEND = "https://potential-orbit-7j4w9r7wwwhrvwx-5000.app.github.dev/gerar"; 
+        // --------------------
+
+        async function gerarImagem() {
+            const prompt = document.getElementById('promptInput').value;
+            const btn = document.getElementById('btnGerar');
+            const status = document.getElementById('status');
+            const img = document.getElementById('imagem-resultado');
+
+            // 1. Validação
+            if (!prompt.trim()) {
+                status.innerText = "⚠️ Por favor, escreva o que você quer ver!";
+                status.style.color = "#d9534f";
+                return;
+            }
+
+            // 2. Preparar visual (Loading)
+            btn.disabled = true;
+            btn.innerText = "🎨 Pintando...";
+            status.innerText = "Conectando à IA... aguarde um pouco.";
+            status.style.color = "#666";
+            img.style.display = 'none';
+
+            try {
+                // 3. Enviar pedido para o Python
+                const response = await fetch(URL_DO_BACKEND, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.url) {
+                    // 4. Sucesso!
+                    img.src = data.url;
+                    img.style.display = 'block';
+                    status.innerText = "✅ Imagem gerada com sucesso!";
+                    status.style.color = "green";
+                } else {
+                    // Erro vindo do Python
+                    throw new Error(data.erro || "Erro desconhecido na geração.");
+                }
+
+            } catch (error) {
+                // 5. Erro de Rede ou Código
+                console.error(error);
+                status.innerHTML = "❌ <b>Erro:</b> " + error.message + "<br><small>Verifique se o Python está rodando e a porta 5000 está 'Public'.</small>";
+                status.style.color = "#d9534f";
+            } finally {
+                // 6. Restaurar botão
+                btn.disabled = false;
+                btn.innerText = "Criar Imagem";
+            }
+        }
+    </script>
+
+</body>
+</html>
