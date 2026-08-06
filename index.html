@@ -223,6 +223,26 @@
         }
 
         .modal .modal-download:hover { background-color: #1e8449; }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin: 20px auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #loading-area {
+            display: none;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -247,6 +267,7 @@
         <button onclick="gerarImagem()" id="btnGerar">Criar Imagem</button>
         
         <div id="status"></div>
+        <div id="loading-area"><div class="spinner"></div><p>Gerando imagem... isso pode levar alguns segundos.</p></div>
         <img id="imagem-resultado" src="" alt="Resultado da IA">
     </div>
 
@@ -308,7 +329,8 @@
             galeria.style.display = 'block';
             grid.innerHTML = itens.map((item, i) => `
                 <div class="galeria-item" onclick="abrirModal(${i})" title="${item.prompt}">
-                    <img src="${item.url}" alt="${item.prompt}" loading="lazy">
+                    <img src="${item.url}" alt="${item.prompt}" loading="lazy"
+                         onerror="removerImagemQuebrada(${i})">
                     <div class="badge">${item.estilo}</div>
                 </div>
             `).join('');
@@ -317,6 +339,13 @@
         function adicionarNaGaleria(url, prompt, estilo) {
             const itens = carregarGaleria();
             itens.unshift({ url, prompt, estilo, data: new Date().toISOString() });
+            salvarGaleria(itens);
+            renderizarGaleria();
+        }
+
+        function removerImagemQuebrada(indice) {
+            const itens = carregarGaleria();
+            itens.splice(indice, 1);
             salvarGaleria(itens);
             renderizarGaleria();
         }
@@ -380,43 +409,65 @@
             status.innerText = "Conectando à IA... aguarde um pouco.";
             status.style.color = "#666";
             img.style.display = 'none';
+            document.getElementById('loading-area').style.display = 'block';
 
-            try {
-                // 3. Enviar pedido para o Python (com o estilo escolhido)
-                const response = await fetch(URL_DO_BACKEND, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ prompt: prompt, style: estilo })
-                });
+            let tentativa = 0;
+            const MAX_TENTATIVAS = 3;
 
-                const data = await response.json();
+            async function tentarGerar() {
+                try {
+                    // Enviar pedido para o Python (com o estilo e tentativa)
+                    const response = await fetch(URL_DO_BACKEND, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ prompt: prompt, style: estilo, novo: tentativa })
+                    });
 
-                if (response.ok && data.url) {
-                    // 4. Sucesso!
+                    const data = await response.json();
+                    if (!response.ok || !data.url) {
+                        throw new Error(data.erro || "Erro desconhecido na geração.");
+                    }
+
+                    // Valida que a imagem CARREGOU de verdade antes de exibir
+                    await new Promise((resolve, reject) => {
+                        const teste = new Image();
+                        teste.onload = resolve;
+                        teste.onerror = () => reject(new Error("A imagem não carregou. Tentando de novo..."));
+                        teste.src = data.url;
+                        // timeout de 60s para a geração (Pollinations gera sob demanda)
+                        setTimeout(() => reject(new Error("Tempo esgotado gerando a imagem.")), 60000);
+                    });
+
+                    // Sucesso!
                     img.src = data.url;
                     img.style.display = 'block';
                     status.innerText = "✅ Imagem gerada com sucesso!";
                     status.style.color = "green";
 
-                    // 5. Adiciona à galeria
+                    // Adiciona à galeria (só agora, com imagem validada)
                     adicionarNaGaleria(data.url, prompt, estilo);
-                } else {
-                    // Erro vindo do Python
-                    throw new Error(data.erro || "Erro desconhecido na geração.");
-                }
+                    return true;
 
-            } catch (error) {
-                // 6. Erro de Rede ou Código
-                console.error(error);
-                status.innerHTML = "❌ <b>Erro:</b> " + error.message;
-                status.style.color = "#d9534f";
-            } finally {
-                // 7. Restaurar botão
-                btn.disabled = false;
-                btn.innerText = "Criar Imagem";
+                } catch (error) {
+                    console.error(error);
+                    tentativa++;
+                    if (tentativa < MAX_TENTATIVAS) {
+                        status.innerText = "⚠️ " + error.message + " (tentativa " + (tentativa+1) + "/" + MAX_TENTATIVAS + ")";
+                        status.style.color = "#e67e22";
+                        return tentarGerar(); // tenta de novo com seed novo
+                    }
+                    status.innerHTML = "❌ <b>Erro:</b> " + error.message;
+                    status.style.color = "#d9534f";
+                    return false;
+                }
             }
+
+            await tentarGerar();
+
+            // Restaurar botão
+            document.getElementById('loading-area').style.display = 'none';
+            btn.disabled = false;
+            btn.innerText = "Criar Imagem";
         }
 
         // Carrega a galeria salva ao abrir a página

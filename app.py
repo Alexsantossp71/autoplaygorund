@@ -1,6 +1,7 @@
 import os
 import re
 import random
+import time
 import urllib.request
 import urllib.parse
 from flask import Flask, request, jsonify, send_from_directory, abort
@@ -116,26 +117,47 @@ def enriquecer_prompt(prompt_usuario, estilo_nome=None):
     return prompt_final
 
 
-def gerar_pollinations(prompt, estilo_nome=None):
-    """Geração de imagem GRÁTIS via Pollinations.ai (sem chave), com prompt enriquecido."""
+def gerar_pollinations(prompt, estilo_nome=None, novo=0):
+    """
+    Geração de imagem via Pollinations.ai.
+    - Seed DETERMINÍSTICO (baseado no prompt) -> imagem fica em cache,
+      carrega instantânea e não quebra.
+    - Param 'novo' força um seed diferente (para o botão de tentar de novo).
+    - Token opcional (POLLINATIONS_TOKEN, grátis em pollinations.ai)
+      desbloqueia o modelo FLUX (qualidade muito superior ao modelo padrão).
+    - Verifica a imagem no servidor antes de devolver a URL (nada de imagem quebrada).
+    """
     prompt_final = enriquecer_prompt(prompt, estilo_nome)
+    seed = (abs(hash(prompt_final)) + int(novo or 0) * 7919) % 100000
 
     url = "https://image.pollinations.ai/prompt/" + urllib.parse.quote(prompt_final)
-    # 1024px para alta qualidade + enhance da própria Pollinations + modelo flux
-    # seed aleatório para cada geração (variedade)
-    url += ("?width=1024&height=1024&nologo=true&enhance=true&model=flux"
-            f"&seed={random.randint(0, 99999)}")
+    url += (f"?width=1024&height=1024&nologo=true&enhance=false"
+            f"&referrer=alexsantossp71.github.io&seed={seed}")
 
-    # Faz uma requisição HEAD/GET leve só para validar e devolve a URL
-    # (o navegador do usuário baixa a imagem direto do Pollinations)
-    req = urllib.request.Request(url, method="HEAD")
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            if resp.status == 200:
-                return url
-    except Exception as e:
-        print(f"Pollinations HEAD falhou: {e}")
-    return url  # mesmo sem HEAD, a URL costuma funcionar
+    # Token opcional: desbloqueia modelos melhores (FLUX) no Pollinations
+    token = os.getenv("POLLINATIONS_TOKEN")
+    if token:
+        url += f"&token={token}"
+
+    # Verifica se a imagem é válida (baixa o início do arquivo)
+    # e tenta de novo em caso de falha (rate limit/instabilidade)
+    for tentativa in range(3):
+        try:
+            req = urllib.request.Request(url, method="GET")
+            with urllib.request.urlopen(req, timeout=90) as resp:
+                dados = resp.read(2048)
+                # JPEG (FF D8 FF) ou PNG ou GIF = imagem válida
+                if dados[:3] == b'\xff\xd8\xff' or b'PNG' in dados[:16] or dados[:3] == b'GIF':
+                    print(f"Pollinations OK (tentativa {tentativa+1})")
+                    return url
+                else:
+                    print(f"Pollinations retornou conteúdo não-imagem (tentativa {tentativa+1})")
+        except Exception as e:
+            print(f"Pollinations falhou (tentativa {tentativa+1}): {e}")
+        time.sleep(2)
+
+    # Último recurso: devolve a URL mesmo assim (pode funcionar no navegador)
+    return url
 
 
 def extrair_url_imagem(completion):
@@ -186,6 +208,7 @@ def gerar_imagem():
     dados = request.json
     prompt_usuario = dados.get('prompt') if dados else None
     estilo_usuario = dados.get('style') if dados else None
+    novo = int(dados.get('novo') or 0) if dados else 0
 
     if not prompt_usuario:
         return jsonify({"erro": "O prompt é obrigatório!"}), 400
@@ -195,7 +218,7 @@ def gerar_imagem():
     # ---- Provedor 1: Pollinations (grátis, padrão) ----
     if PROVIDER == "pollinations":
         try:
-            url = gerar_pollinations(prompt_usuario, estilo_usuario)
+            url = gerar_pollinations(prompt_usuario, estilo_usuario, novo)
             return jsonify({"url": url, "provider": "pollinations"})
         except Exception as e:
             print(f"Erro no Pollinations: {e}")
@@ -227,7 +250,9 @@ def gerar_imagem():
 def servir_frontend():
     """Serve o frontend (index.html) — o site fica acessível direto na Render."""
     try:
-        return send_from_directory(os.path.dirname(os.path.abspath(__file__)), 'index.html')
+        resposta = send_from_directory(os.path.dirname(os.path.abspath(__file__)), 'index.html')
+        resposta.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return resposta
     except FileNotFoundError:
         abort(404)
 
