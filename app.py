@@ -70,7 +70,19 @@ ESTILOS = [
      "balanced negative space, premium flat design"),
 ]
 
-def enriquecer_prompt(prompt_usuario):
+# Estilos por nome (usados pelo seletor manual do frontend)
+ESTILOS_POR_NOME = {
+    "auto": None,
+    "foto": "photorealistic, professional photography, 85mm lens, shallow depth of field, natural golden-hour lighting, film grain",
+    "cartoon": "vibrant cartoon style, smooth cel shading, expressive characters, polished animation still, bold outlines",
+    "pixel": "crisp pixel art, meticulous pixel detail, retro 16-bit game aesthetic, limited vibrant palette",
+    "pintura": "fine art painting, rich visible brushstrokes, masterful chiaroscuro, museum-quality artwork",
+    "scifi": "epic cinematic sci-fi concept art, volumetric lighting, glowing neon accents, dramatic atmosphere, deep space background",
+    "natureza": "breathtaking landscape photography, golden hour light, god rays, ultra-detailed scenery, atmospheric depth",
+    "minimalista": "elegant minimalism, clean geometric shapes, soft studio lighting, balanced negative space, premium flat design",
+}
+
+def enriquecer_prompt(prompt_usuario, estilo_nome=None):
     """
     Melhora o prompt do usuário adicionando direção de estilo e termos
     de qualidade, para gerar imagens significativamente mais bonitas.
@@ -81,13 +93,17 @@ def enriquecer_prompt(prompt_usuario):
 
     texto = base.lower()
 
-    # 1. Detecta o estilo mais provável pelas palavras do usuário
-    estilo_escolhido = None
-    for palavras, sufixo in ESTILOS:
-        if any(p in texto for p in palavras):
-            estilo_escolhido = sufixo
-            break
+    # 1. Estilo manual (seletor do frontend) tem prioridade
+    estilo_escolhido = ESTILOS_POR_NOME.get(estilo_nome) if estilo_nome else None
 
+    # 2. Se não veio estilo manual, detecta pelas palavras do usuário
+    if not estilo_escolhido:
+        for palavras, sufixo in ESTILOS:
+            if any(p in texto for p in palavras):
+                estilo_escolhido = sufixo
+                break
+
+    # 3. Fallback: estilo digital art genérico de alta qualidade
     if not estilo_escolhido:
         estilo_escolhido = (
             "stunning digital art, masterpiece quality, dramatic cinematic lighting, "
@@ -100,9 +116,9 @@ def enriquecer_prompt(prompt_usuario):
     return prompt_final
 
 
-def gerar_pollinations(prompt):
+def gerar_pollinations(prompt, estilo_nome=None):
     """Geração de imagem GRÁTIS via Pollinations.ai (sem chave), com prompt enriquecido."""
-    prompt_final = enriquecer_prompt(prompt)
+    prompt_final = enriquecer_prompt(prompt, estilo_nome)
 
     url = "https://image.pollinations.ai/prompt/" + urllib.parse.quote(prompt_final)
     # 1024px para alta qualidade + enhance da própria Pollinations + modelo flux
@@ -169,6 +185,7 @@ def extrair_url_imagem(completion):
 def gerar_imagem():
     dados = request.json
     prompt_usuario = dados.get('prompt') if dados else None
+    estilo_usuario = dados.get('style') if dados else None
 
     if not prompt_usuario:
         return jsonify({"erro": "O prompt é obrigatório!"}), 400
@@ -178,7 +195,7 @@ def gerar_imagem():
     # ---- Provedor 1: Pollinations (grátis, padrão) ----
     if PROVIDER == "pollinations":
         try:
-            url = gerar_pollinations(prompt_usuario)
+            url = gerar_pollinations(prompt_usuario, estilo_usuario)
             return jsonify({"url": url, "provider": "pollinations"})
         except Exception as e:
             print(f"Erro no Pollinations: {e}")

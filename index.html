@@ -11,7 +11,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
             margin: 0;
             padding: 20px;
@@ -22,7 +21,7 @@
             padding: 2.5rem;
             border-radius: 15px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 500px;
+            max-width: 520px;
             width: 100%;
             text-align: center;
         }
@@ -34,7 +33,7 @@
         input[type="text"] {
             width: 100%;
             padding: 15px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             box-sizing: border-box;
@@ -44,6 +43,22 @@
         }
 
         input[type="text"]:focus { border-color: #007bff; }
+
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 15px;
+            background-color: #fafafa;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        select:focus { border-color: #007bff; }
 
         button {
             background-color: #007bff;
@@ -81,6 +96,133 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* ===== GALERIA ===== */
+        .galeria {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 520px;
+            width: 100%;
+            margin-top: 20px;
+            padding: 1.5rem;
+            display: none; /* aparece quando há imagens */
+            text-align: left;
+        }
+
+        .galeria-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .galeria-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #1a1a1a;
+        }
+
+        .galeria-header button {
+            width: auto;
+            padding: 8px 14px;
+            font-size: 13px;
+            background-color: #e74c3c;
+            border-radius: 8px;
+        }
+
+        .galeria-header button:hover { background-color: #c0392b; }
+
+        .galeria-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .galeria-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .galeria-item:hover { transform: scale(1.05); }
+
+        .galeria-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .galeria-item .badge {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 10px;
+            padding: 3px 5px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Modal para ver imagem em grande */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 80vh;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .modal .modal-prompt {
+            color: #ddd;
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .modal .modal-fechar {
+            position: absolute;
+            top: 20px; right: 30px;
+            color: white;
+            font-size: 36px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: auto;
+            padding: 0;
+        }
+
+        .modal .modal-download {
+            margin-top: 10px;
+            width: auto;
+            padding: 10px 24px;
+            font-size: 14px;
+            background-color: #27ae60;
+        }
+
+        .modal .modal-download:hover { background-color: #1e8449; }
     </style>
 </head>
 <body>
@@ -91,23 +233,133 @@
         
         <input type="text" id="promptInput" placeholder="Ex: Um astronauta andando de skate em Marte">
         
+        <select id="estiloSelect" title="Escolha o estilo da imagem">
+            <option value="auto">🎨 Estilo automático (detectar pelo texto)</option>
+            <option value="foto">📷 Foto realista</option>
+            <option value="cartoon">🖍️ Cartoon / Anime</option>
+            <option value="pixel">👾 Pixel art (retro)</option>
+            <option value="pintura">🖼️ Pintura / Aquarela</option>
+            <option value="scifi">🚀 Sci-fi / Cyberpunk</option>
+            <option value="natureza">🌿 Natureza / Paisagem</option>
+            <option value="minimalista">⬜ Minimalista / Flat</option>
+        </select>
+        
         <button onclick="gerarImagem()" id="btnGerar">Criar Imagem</button>
         
         <div id="status"></div>
         <img id="imagem-resultado" src="" alt="Resultado da IA">
     </div>
 
+    <!-- GALERIA -->
+    <div class="galeria" id="galeria">
+        <div class="galeria-header">
+            <h2>🖼️ Suas criações</h2>
+            <button onclick="limparGaleria()">🗑️ Limpar</button>
+        </div>
+        <div class="galeria-grid" id="galeriaGrid"></div>
+    </div>
+
+    <!-- MODAL (imagem em tamanho grande) -->
+    <div class="modal" id="modal" onclick="fecharModal(event)">
+        <button class="modal-fechar" onclick="fecharModal(event)">×</button>
+        <img id="modalImg" src="" alt="Imagem ampliada">
+        <div class="modal-prompt" id="modalPrompt"></div>
+        <button class="modal-download" id="modalDownload">⬇️ Baixar imagem</button>
+    </div>
+
     <script>
         // --- CONFIGURAÇÃO ---
-        // Já coloquei o seu link aqui. 
-        // IMPORTANTE: Se você reiniciar o Codespaces outro dia, esse link pode mudar!
         // Endereço do backend Flask hospedado na Render (ver render.yaml)
-        // Se a URL do seu serviço for diferente, atualize aqui.
         const URL_DO_BACKEND = "https://autoplaygorund-api.onrender.com/gerar";
-        // --------------------
+        const CHAVE_GALERIA = "autoplaygorund_galeria"; // localStorage
 
+        // ========== GALERIA ==========
+        function carregarGaleria() {
+            try {
+                const salvo = JSON.parse(localStorage.getItem(CHAVE_GALERIA) || "[]");
+                return Array.isArray(salvo) ? salvo : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function salvarGaleria(items) {
+            try {
+                localStorage.setItem(CHAVE_GALERIA, JSON.stringify(items.slice(0, 30))); // máx 30
+            } catch (e) {
+                console.warn("localStorage cheio ou indisponível", e);
+            }
+        }
+
+        function renderizarGaleria() {
+            const itens = carregarGaleria();
+            const grid = document.getElementById('galeriaGrid');
+            const galeria = document.getElementById('galeria');
+
+            if (itens.length === 0) {
+                galeria.style.display = 'none';
+                grid.innerHTML = '';
+                return;
+            }
+
+            galeria.style.display = 'block';
+            grid.innerHTML = itens.map((item, i) => `
+                <div class="galeria-item" onclick="abrirModal(${i})" title="${item.prompt}">
+                    <img src="${item.url}" alt="${item.prompt}" loading="lazy">
+                    <div class="badge">${item.estilo}</div>
+                </div>
+            `).join('');
+        }
+
+        function adicionarNaGaleria(url, prompt, estilo) {
+            const itens = carregarGaleria();
+            itens.unshift({ url, prompt, estilo, data: new Date().toISOString() });
+            salvarGaleria(itens);
+            renderizarGaleria();
+        }
+
+        function limparGaleria() {
+            if (confirm("Apagar todas as imagens da galeria?")) {
+                localStorage.removeItem(CHAVE_GALERIA);
+                renderizarGaleria();
+            }
+        }
+
+        // ========== MODAL ==========
+        function abrirModal(indice) {
+            const itens = carregarGaleria();
+            const item = itens[indice];
+            if (!item) return;
+            document.getElementById('modalImg').src = item.url;
+            document.getElementById('modalPrompt').textContent = `💬 "${item.prompt}" — estilo: ${item.estilo}`;
+            document.getElementById('modalDownload').onclick = () => {
+                const a = document.createElement('a');
+                a.href = item.url;
+                a.download = `arte-ai-${Date.now()}.jpg`;
+                a.target = '_blank';
+                a.click();
+            };
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function fecharModal(event) {
+            // Fecha se clicar no fundo, no X ou no botão
+            if (event.target === document.getElementById('modal') ||
+                event.target.classList.contains('modal-fechar') ||
+                event.target === document.getElementById('modalDownload')) {
+                document.getElementById('modal').style.display = 'none';
+            }
+        }
+
+        // Fecha com a tecla ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') document.getElementById('modal').style.display = 'none';
+        });
+
+        // ========== GERAÇÃO ==========
         async function gerarImagem() {
             const prompt = document.getElementById('promptInput').value;
+            const estilo = document.getElementById('estiloSelect').value;
             const btn = document.getElementById('btnGerar');
             const status = document.getElementById('status');
             const img = document.getElementById('imagem-resultado');
@@ -127,13 +379,13 @@
             img.style.display = 'none';
 
             try {
-                // 3. Enviar pedido para o Python
+                // 3. Enviar pedido para o Python (com o estilo escolhido)
                 const response = await fetch(URL_DO_BACKEND, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ prompt: prompt })
+                    body: JSON.stringify({ prompt: prompt, style: estilo })
                 });
 
                 const data = await response.json();
@@ -144,22 +396,28 @@
                     img.style.display = 'block';
                     status.innerText = "✅ Imagem gerada com sucesso!";
                     status.style.color = "green";
+
+                    // 5. Adiciona à galeria
+                    adicionarNaGaleria(data.url, prompt, estilo);
                 } else {
                     // Erro vindo do Python
                     throw new Error(data.erro || "Erro desconhecido na geração.");
                 }
 
             } catch (error) {
-                // 5. Erro de Rede ou Código
+                // 6. Erro de Rede ou Código
                 console.error(error);
-                status.innerHTML = "❌ <b>Erro:</b> " + error.message + "<br><small>Verifique se o Python está rodando e a porta 5000 está 'Public'.</small>";
+                status.innerHTML = "❌ <b>Erro:</b> " + error.message;
                 status.style.color = "#d9534f";
             } finally {
-                // 6. Restaurar botão
+                // 7. Restaurar botão
                 btn.disabled = false;
                 btn.innerText = "Criar Imagem";
             }
         }
+
+        // Carrega a galeria salva ao abrir a página
+        renderizarGaleria();
     </script>
 
 </body>
