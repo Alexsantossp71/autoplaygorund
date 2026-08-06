@@ -1,0 +1,21 @@
+# =========================================
+#  Render Blueprint — deploy automático
+#  Como usar:
+#    1. Crie uma conta grátis em render.com
+#    2. Dashboard → New → Blueprint
+#    3. Conecte este repositório (GitHub)
+#    4. A Render lê este arquivo e cria o serviço
+#    5. Depois do deploy, defina a variável OPENROUTER_API_KEY
+#       em Dashboard → autoplaygorund-api → Environment
+# =========================================
+services:
+  - type: web
+    name: autoplaygorund-api
+    runtime: python
+    plan: free
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false   # você define no painel (nunca vai para o git)

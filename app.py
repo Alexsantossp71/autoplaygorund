@@ -8,34 +8,40 @@ app = Flask(__name__)
 # Habilita CORS para aceitar pedidos do seu GitHub Pages
 CORS(app)
 
-# 1. Pega a chave dos Secrets do GitHub
+# 1. Pega a chave dos Secrets/Environment (Render, Codespaces, .env)
 api_key = os.getenv("OPENROUTER_API_KEY")
 
-# Verificação de segurança para te avisar se a chave falhar
-if not api_key:
+# 2. Cliente OpenAI só é criado se a chave existir.
+#    (Antes, sem chave, o servidor quebrava na inicialização)
+client = None
+if api_key:
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
+    )
+else:
     print("ERRO CRÍTICO: A variável 'OPENROUTER_API_KEY' não foi encontrada.")
-    print("Dica: Se você acabou de adicionar o Secret, feche e abra o Codespace ou use o comando 'Reload Window'.")
+    print("Dica Render: Dashboard -> autoplaygorund-api -> Environment -> Add")
+    print("Dica local:  copie .env.example para .env e preencha a chave")
 
-# 2. Configura o cliente para o OpenRouter
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=api_key,
-)
 
 @app.route('/gerar', methods=['POST'])
 def gerar_imagem():
     dados = request.json
-    prompt_usuario = dados.get('prompt')
+    prompt_usuario = dados.get('prompt') if dados else None
 
     if not prompt_usuario:
         return jsonify({"erro": "O prompt é obrigatório!"}), 400
+
+    if client is None:
+        return jsonify({"erro": "Servidor sem chave de API configurada. Contate o administrador."}), 500
 
     print(f"--- Recebido pedido: {prompt_usuario} ---")
 
     try:
         # 3. Chama o modelo FLUX via OpenRouter
         completion = client.chat.completions.create(
-            model="black-forest-labs/flux-1-schnell", # Modelo rápido e barato de imagem
+            model="black-forest-labs/flux-1-schnell",  # Modelo rápido e barato de imagem
             messages=[
                 {
                     "role": "user",
@@ -55,7 +61,7 @@ def gerar_imagem():
         if url_match:
             url_limpa = url_match.group(1)
             # Remove caracteres estranhos no final se houver (comum em markdown)
-            url_limpa = url_limpa.rstrip(')') 
+            url_limpa = url_limpa.rstrip(')')
             return jsonify({"url": url_limpa})
         else:
             # Se não achou link, devolve o erro que a IA deu (ex: filtro de conteúdo)
@@ -65,6 +71,15 @@ def gerar_imagem():
         print(f"Erro no servidor: {e}")
         return jsonify({"erro": str(e)}), 500
 
+
+@app.route('/health', methods=['GET'])
+def health():
+    """Rota de verificação (a Render usa para saber se o serviço está vivo)."""
+    return jsonify({"status": "ok", "api_key_configured": client is not None})
+
+
 if __name__ == '__main__':
-    # Roda o servidor acessível externamente na porta 5000
-    app.run(host='0.0.0.0', port=5000)
+    # Roda o servidor acessível externamente
+    # Porta vem da variável de ambiente (Render usa PORT; local usa 5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)

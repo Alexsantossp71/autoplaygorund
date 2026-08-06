@@ -46,9 +46,28 @@ python app.py
 
 ```
 autoplaygorund/
-├── app.py        # API Flask (rota POST /gerar)
-└── index.html    # Frontend (envia o prompt e exibe a imagem)
+├── app.py           # API Flask (rotas POST /gerar e GET /health)
+├── index.html       # Frontend (envia o prompt e exibe a imagem)
+├── requirements.txt # Dependências Python
+├── render.yaml      # Deploy automático na Render
+└── .env.example     # Modelo de variáveis de ambiente
 ```
+
+## 🚀 Deploy na Render (grátis)
+
+O arquivo `render.yaml` configura o deploy automático:
+
+1. Crie uma conta grátis em **render.com** (pode logar com o GitHub)
+2. No dashboard: **New → Blueprint**
+3. Selecione este repositório — a Render lê o `render.yaml` e cria o serviço
+4. Aguarde o build (~2 min) — o serviço fica em `https://autoplaygorund-api.onrender.com`
+5. **Defina a chave:** Dashboard → `autoplaygorund-api` → **Environment** → adicione `OPENROUTER_API_KEY` (crie em openrouter.ai/keys) → **Deploy** (ou aguarde o redeploy automático)
+
+> ⚠️ Se a URL gerada pela Render for diferente de `https://autoplaygorund-api.onrender.com`, atualize a constante `URL_DO_BACKEND` no `index.html`.
+
+## 🔍 Testes
+
+O backend tem uma rota de saúde: `GET /health` → `{"status": "ok", "api_key_configured": true/false}`
 
 ## 👤 Autor
 
@@ -56,4 +75,4 @@ autoplaygorund/
 
 ## 📄 Status
 
-Projeto de estudo funcional (última atualização: janeiro/2026).
+Projeto de estudo funcional (deploy preparado para Render — agosto/2026).
