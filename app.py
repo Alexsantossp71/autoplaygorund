@@ -1,5 +1,6 @@
 import os
 import re
+import random
 import urllib.request
 import urllib.parse
 from flask import Flask, request, jsonify
@@ -32,10 +33,83 @@ if api_key:
     )
 
 
+# ============================================================
+#  2. ENRIQUECEDOR DE PROMPT — transforma o pedido do usuário
+#     em uma descrição esteticamente superior para a IA
+# ============================================================
+
+# Termos de qualidade (em inglês — modelos de imagem respondem melhor)
+QUALIDADE_BASE = (
+    "ultra high resolution, sharp focus, intricate details, "
+    "professional color grading, award-winning composition"
+)
+
+# Estilos detectados automaticamente por palavras-chave do usuário
+ESTILOS = [
+    # (palavras-chave, sufixo de estilo)
+    (["foto", "photo", "realista", "fotografic", "photographic", "retrato"],
+     "photorealistic, professional photography, 85mm lens, shallow depth of field, "
+     "natural golden-hour lighting, film grain"),
+    (["cartoon", "desenho", "anime", "animac", "animation"],
+     "vibrant cartoon style, smooth cel shading, expressive characters, "
+     "polished animation still, bold outlines"),
+    (["pixel", "8-bit", "8bit", "retro", "games retro"],
+     "crisp pixel art, meticulous pixel detail, retro 16-bit game aesthetic, "
+     "limited vibrant palette"),
+    (["pintura", "painting", "oleo", "aquarela", "watercolor", "arte clas"],
+     "fine art painting, rich visible brushstrokes, masterful chiaroscuro, "
+     "museum-quality artwork"),
+    (["futurista", "cyberpunk", "futuristic", "scifi", "space", "espaco", "galaxia", "galaxy"],
+     "epic cinematic sci-fi concept art, volumetric lighting, glowing neon accents, "
+     "dramatic atmosphere, deep space background"),
+    (["natureza", "nature", "paisagem", "landscape", "montanha", "floresta", "praia"],
+     "breathtaking landscape photography, golden hour light, god rays, "
+     "ultra-detailed scenery, atmospheric depth"),
+    (["minimal", "minimalista", "simples", "flat"],
+     "elegant minimalism, clean geometric shapes, soft studio lighting, "
+     "balanced negative space, premium flat design"),
+]
+
+def enriquecer_prompt(prompt_usuario):
+    """
+    Melhora o prompt do usuário adicionando direção de estilo e termos
+    de qualidade, para gerar imagens significativamente mais bonitas.
+    """
+    base = (prompt_usuario or "").strip()
+    if not base:
+        base = "uma cena surreal e vibrante, cheia de detalhes"
+
+    texto = base.lower()
+
+    # 1. Detecta o estilo mais provável pelas palavras do usuário
+    estilo_escolhido = None
+    for palavras, sufixo in ESTILOS:
+        if any(p in texto for p in palavras):
+            estilo_escolhido = sufixo
+            break
+
+    if not estilo_escolhido:
+        estilo_escolhido = (
+            "stunning digital art, masterpiece quality, dramatic cinematic lighting, "
+            "vibrant colors, dynamic composition"
+        )
+
+    # 2. Monta o prompt final (base + estilo + qualidade)
+    prompt_final = f"{base}, {estilo_escolhido}, {QUALIDADE_BASE}"
+    print(f"--- Prompt enriquecido: {prompt_final}")
+    return prompt_final
+
+
 def gerar_pollinations(prompt):
-    """Geração de imagem GRÁTIS via Pollinations.ai (sem chave)."""
-    url = "https://image.pollinations.ai/prompt/" + urllib.parse.quote(prompt)
-    url += "?width=512&height=512&nologo=true&seed=" + str(abs(hash(prompt)) % 100000)
+    """Geração de imagem GRÁTIS via Pollinations.ai (sem chave), com prompt enriquecido."""
+    prompt_final = enriquecer_prompt(prompt)
+
+    url = "https://image.pollinations.ai/prompt/" + urllib.parse.quote(prompt_final)
+    # 1024px para alta qualidade + enhance da própria Pollinations + modelo flux
+    # seed aleatório para cada geração (variedade)
+    url += ("?width=1024&height=1024&nologo=true&enhance=true&model=flux"
+            f"&seed={random.randint(0, 99999)}")
+
     # Faz uma requisição HEAD/GET leve só para validar e devolve a URL
     # (o navegador do usuário baixa a imagem direto do Pollinations)
     req = urllib.request.Request(url, method="HEAD")
