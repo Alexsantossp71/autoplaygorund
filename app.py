@@ -17,6 +17,8 @@ api_key = os.getenv("OPENROUTER_API_KEY")
 #   google/gemini-3.1-flash-image       -> melhor qualidade
 #   openai/gpt-5-image-mini             -> alternativa OpenAI
 IMAGE_MODEL = os.getenv("IMAGE_MODEL", "google/gemini-3.1-flash-lite-image")
+# Limite de tokens de saída (o Gemini Image reserva muitos tokens; ajuste conforme seu crédito)
+MAX_TOKENS = int(os.getenv("MAX_TOKENS", "8000"))
 
 # 2. Cliente OpenAI só é criado se a chave existir.
 #    (Antes, sem chave, o servidor quebrava na inicialização)
@@ -109,6 +111,7 @@ def gerar_imagem():
             ],
             # Sinaliza que a resposta deve incluir imagem (usado pelos modelos Gemini/GPT Image)
             modalities=["image", "text"],
+            max_tokens=MAX_TOKENS,
         )
 
         # 4. Extrai a URL da imagem da resposta
