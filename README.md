@@ -9,9 +9,13 @@ Aplicação simples que permite descrever uma imagem em texto e receber uma imag
 ## ✨ Funcionalidades
 
 - 🖼️ Geração de imagens a partir de prompt de texto
+- ✨ **Enriquecimento automático de prompts** — detecta o estilo (foto, cartoon, pixel art, pintura, sci-fi, natureza...) e adiciona termos de qualidade estética
+- 🎨 Imagens em **1024×1024** com modelo FLUX (via Pollinations.ai, 100% grátis)
 - 🔐 Chave de API protegida — lida de **variável de ambiente** (nunca fica no frontend)
 - 🌐 CORS habilitado — o frontend pode ser servido do GitHub Pages
 - 📝 Validação de prompt e tratamento de erros da IA
+- 🆓 **Sem custo** — geração via Pollinations.ai (não precisa de chave nem créditos)
+- 🔀 Provedor alternativo OpenRouter (via variável `IMAGE_PROVIDER=openrouter`)
 
 ## 🛠️ Tecnologias
 
@@ -52,6 +56,18 @@ autoplaygorund/
 ├── render.yaml      # Deploy automático na Render
 └── .env.example     # Modelo de variáveis de ambiente
 ```
+
+## 🧠 Como funciona o enriquecimento de prompt
+
+Quando o usuário digita um prompt simples (ex.: "um gato astronauta"), o backend o transforma em:
+
+```
+um gato astronauta, stunning digital art, masterpiece quality, dramatic cinematic lighting,
+vibrant colors, dynamic composition, ultra high resolution, sharp focus, intricate details,
+professional color grading, award-winning composition
+```
+
+**Estilos detectados automaticamente:** foto/realista (85mm lens, golden-hour), cartoon/anime (cel shading), pixel art (16-bit), pintura (brushstrokes, chiaroscuro), sci-fi/cyberpunk (volumetric lighting, neon), natureza (god rays), minimalista (flat design).
 
 ## 🚀 Deploy na Render (grátis)
 
