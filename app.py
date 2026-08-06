@@ -72,6 +72,186 @@ ESTILOS = [
 ]
 
 # Estilos por nome (usados pelo seletor manual do frontend)
+
+# ============================================================
+#  3. TRADUTOR PT->EN EMBUTIDO
+#     O modelo "sana" do Pollinations entende inglês muito melhor.
+#     Traduz as palavras mais comuns do prompt para inglês
+#     antes de enriquecer (melhora MUITO a aderência).
+# ============================================================
+DICIONARIO_PT_EN = {
+    # substantivos comuns
+    "porta": "door", "casa": "house", "gato": "cat", "gatos": "cats",
+    "cachorro": "dog", "cachorros": "dogs", "mulher": "woman",
+    "homem": "man", "mulheres": "women", "homens": "men",
+    "carro": "car", "carros": "cars", "arvore": "tree", "arvores": "trees",
+    "flor": "flower", "flores": "flowers", "montanha": "mountain",
+    "montanhas": "mountains", "mar": "sea", "oceano": "ocean",
+    "praia": "beach", "ceu": "sky", "sol": "sun", "lua": "moon",
+    "estrelas": "stars", "cidade": "city", "castelo": "castle",
+    "ponte": "bridge", "rio": "river", "lago": "lake", "floresta": "forest",
+    "jardim": "garden", "cachoeira": "waterfall", "deserto": "desert",
+    "neve": "snow", "fogo": "fire", "agua": "water", "pedra": "stone",
+    "madeira": "wood", "janela": "window", "telhado": "roof",
+    "rua": "street", "estrada": "road", "trem": "train", "aviao": "airplane",
+    "barco": "boat", "navio": "ship", "bicicleta": "bicycle",
+    "moto": "motorcycle", "cavalo": "horse", "passaro": "bird",
+    "passaros": "birds", "peixe": "fish", "borboleta": "butterfly",
+    "leao": "lion", "tigre": "tiger", "elefante": "elephant",
+    "urso": "bear", "lobo": "wolf", "raposa": "fox", "coelho": "rabbit",
+    "pato": "duck", "galinha": "chicken", "vaca": "cow", "porco": "pig",
+    "ovelha": "sheep", "cabra": "goat", "macaco": "monkey",
+    "girafa": "giraffe", "zebra": "zebra", "cobra": "snake",
+    "crocodilo": "crocodile", "tubarao": "shark", "baleia": "whale",
+    "golfinho": "dolphin", "polvo": "octopus", "caranguejo": "crab",
+    "estrela-do-mar": "starfish", "coruja": "owl", "aguia": "eagle",
+    "pinguim": "penguin", "camelo": "camel", "canguru": "kangaroo",
+    "panda": "panda", "esquilo": "squirrel", "rato": "mouse",
+    "morcego": "bat", "sapo": "frog", "lagarto": "lizard",
+    "tartaruga": "turtle", "dinossauro": "dinosaur", "dragao": "dragon",
+    "unicornio": "unicorn", "fada": "fairy", "bruxa": "witch",
+    "mago": "wizard", "cavaleiro": "knight", "espada": "sword",
+    "escudo": "shield", "coroa": "crown", "trono": "throne",
+    "muralha": "wall", "torre": "tower", "portao": "gate",
+    "chave": "key", "cadeado": "lock", "livro": "book", "livros": "books",
+    "lapis": "pencil", "caneta": "pen", "papel": "paper",
+    "mesa": "table", "cadeira": "chair", "sofa": "sofa", "cama": "bed",
+    "cozinha": "kitchen", "quarto": "bedroom", "banheiro": "bathroom",
+    "sala": "living room", "escritorio": "office", "escola": "school",
+    "universidade": "university", "hospital": "hospital", "igreja": "church",
+    "restaurante": "restaurant", "mercado": "market", "loja": "shop",
+    "farmacia": "pharmacy", "biblioteca": "library", "museu": "museum",
+    "teatro": "theater", "estadio": "stadium", "parque": "park",
+    "praca": "square", "fonte": "fountain", "monumento": "monument",
+    "estatua": "statue", "relogio": "clock", "celular": "cellphone",
+    "computador": "computer", "notebook": "laptop", "televisao": "television",
+    "geladeira": "refrigerator", "fogao": "stove", "forno": "oven",
+    "pia": "sink", "banheira": "bathtub", "chuveiro": "shower",
+    "espelho": "mirror", "quadro": "painting", "tapete": "carpet",
+    "cortina": "curtain", "lampada": "lamp", "vela": "candle",
+    "florista": "flower shop", "padeiro": "baker", "padeira": "baker",
+    "pizza": "pizza", "hamburguer": "hamburger", "sorvete": "ice cream",
+    "bolo": "cake", "pao": "bread", "queijo": "cheese", "cafe": "coffee",
+    "cha": "tea", "suco": "juice", "vinho": "wine", "cerveja": "beer",
+    "fruta": "fruit", "frutas": "fruits", "maca": "apple", "banana": "banana",
+    "laranja": "orange", "uva": "grape", "manga": "mango", "abacaxi": "pineapple",
+    "melancia": "watermelon", "morango": "strawberry", "limao": "lemon",
+    "cenoura": "carrot", "batata": "potato", "tomate": "tomato",
+    "cebola": "onion", "alho": "garlic", "pimenta": "pepper",
+    "arroz": "rice", "feijao": "beans", "carne": "meat", "frango": "chicken meat",
+    "peixe-espada": "swordfish", "sushi": "sushi", "massa": "pasta",
+    "salada": "salad", "sopa": "soup", "sanduiche": "sandwich",
+    "cachorro-quente": "hot dog", "pipoca": "popcorn", "chocolate": "chocolate",
+    "bala": "candy", "doce": "sweet", "geleia": "jam", "mel": "honey",
+    "manteiga": "butter", "ovo": "egg", "leite": "milk", "iogurte": "yogurt",
+    "cereal": "cereal", "panqueca": "pancake", "waffle": "waffle",
+    "biscoito": "cookie", "torta": "pie", "pudim": "pudding",
+    "musica": "music", "danca": "dance", "festa": "party",
+    "casamento": "wedding", "aniversario": "birthday", "natal": "christmas",
+    "pascoa": "easter", "halloween": "halloween", "carnaval": "carnival",
+    "futebol": "soccer", "basquete": "basketball", "volei": "volleyball",
+    "tenis": "tennis", "natacao": "swimming", "corrida": "race",
+    "bicicleta-montanha": "mountain bike", "surfe": "surfing",
+    "esqui": "skiing", "patins": "skates", "videogame": "video game",
+    "xadrez": "chess", "cartas": "cards", "dado": "dice",
+    "brinquedo": "toy", "boneca": "doll", "bola": "ball",
+    "pipa": "kite", "foguete": "rocket", "espaconave": "spaceship",
+    "astronauta": "astronaut", "planeta": "planet", "planetas": "planets",
+    "galaxia": "galaxy", "universo": "universe", "cometa": "comet",
+    "meteoro": "meteor", "satelite": "satellite", "alien": "alien",
+    "robo": "robot", "robos": "robots", "carro-esporte": "sports car",
+    "caminhao": "truck", "onibus": "bus", "moto-taxi": "motorcycle taxi",
+    "helicoptero": "helicopter", "baloes": "balloons", "presente": "gift",
+    "caixa": "box", "garrafa": "bottle", "copo": "glass", "xicara": "cup",
+    "prato": "plate", "talheres": "cutlery", "faca": "knife",
+    "garfo": "fork", "colher": "spoon", "guardanapo": "napkin",
+    "toalha": "towel", "sabonete": "soap", "shampoo": "shampoo",
+    "pasta-de-dente": "toothpaste", "escova": "brush", "pente": "comb",
+    "tesoura": "scissors", "martelo": "hammer", "prego": "nail",
+    "parafuso": "screw", "chave-de-fenda": "screwdriver", "serra": "saw",
+    "machado": "axe", "enxada": "hoe", "pá": "shovel",
+    "corda": "rope", "corrente": "chain", "cadeia": "chain",
+    "ferradura": "horseshoe", "sino": "bell", "tambor": "drum",
+    "violao": "guitar", "piano": "piano", "flauta": "flute",
+    "bateria": "drums", "microfone": "microphone", "nota-musical": "musical note",
+    "pincel": "brush", "tinta": "paint", "tela": "canvas",
+    "escultura": "sculpture", "argila": "clay", "ceramica": "ceramics",
+    "joia": "jewel", "anel": "ring", "colar": "necklace", "brinco": "earring",
+    "pulseira": "bracelet", "relogio-de-pulso": "wristwatch", "oculos": "glasses",
+    "chapeu": "hat", "boné": "cap", "cachecol": "scarf", "luva": "glove",
+    "sapato": "shoe", "sapatos": "shoes", "bota": "boot", "sandalia": "sandal",
+    "vestido": "dress", "saia": "skirt", "calca": "pants", "camisa": "shirt",
+    "camiseta": "t-shirt", "casaco": "coat", "jaqueta": "jacket",
+    "terno": "suit", "gravata": "tie", "uniforme": "uniform",
+    "pijama": "pajamas", "roupa": "clothes", "roupas": "clothes",
+    "cinto": "belt", "bolsa": "bag", "mochila": "backpack",
+    "guarda-chuva": "umbrella", "chapel": "hat",
+    # adjetivos/verbos comuns
+    "bonito": "beautiful", "bonita": "beautiful", "lindo": "beautiful",
+    "linda": "beautiful", "feio": "ugly", "grande": "big", "pequeno": "small",
+    "pequena": "small", "alto": "tall", "baixo": "short", "velho": "old",
+    "novo": "new", "nova": "new", "antigo": "ancient", "moderno": "modern",
+    "moderna": "modern", "futurista": "futuristic", "classico": "classic",
+    "classica": "classic", "colorido": "colorful", "colorida": "colorful",
+    "preto": "black", "branco": "white", "branca": "white", "vermelho": "red",
+    "vermelha": "red", "azul": "blue", "verde": "green", "amarelo": "yellow",
+    "amarela": "yellow", "rosa": "pink", "roxo": "purple", "laranja": "orange",
+    "cinza": "gray", "marrom": "brown", "dourado": "golden", "prateado": "silver",
+    "claro": "light", "escuro": "dark", "escura": "dark", "brilhante": "shiny",
+    "enorme": "huge", "gigante": "giant", "miniatura": "miniature",
+    "feliz": "happy", "triste": "sad", "bravo": "angry", "calmo": "calm",
+    "assustador": "scary", "fofo": "cute", "fofa": "cute", "elegante": "elegant",
+    "luxuoso": "luxurious", "simples": "simple", "moderno": "modern",
+    "tecnologico": "technological", "magico": "magical", "magica": "magical",
+    "misterioso": "mysterious", "romantico": "romantic", "alegre": "cheerful",
+    "tranquilo": "peaceful", "tranquila": "peaceful", "selvagem": "wild",
+    "domestico": "domestic", "rural": "rural", "urbano": "urban",
+    "industrial": "industrial", "historico": "historic", "historica": "historic",
+    "medieval": "medieval", "vintage": "vintage", "retro": "retro",
+    "tropical": "tropical", "gelado": "icy", "quente": "hot", "frio": "cold",
+    "ensolarado": "sunny", "chuvoso": "rainy", "nevoado": "foggy",
+    "tempestuoso": "stormy", "ventoso": "windy", "nublado": "cloudy",
+    "escuro": "dark", "iluminado": "illuminated", "neon": "neon",
+    # verbos/contextos
+    "voando": "flying", "correndo": "running", "pulando": "jumping",
+    "nadando": "swimming", "dancando": "dancing", "cantando": "singing",
+    "sentado": "sitting", "deitado": "lying down", "em-pe": "standing",
+    "andando": "walking", "flutuando": "floating", "dormindo": "sleeping",
+    "comendo": "eating", "bebendo": "drinking", "lendo": "reading",
+    "escrevendo": "writing", "desenhando": "drawing", "pintando": "painting",
+    "tocando": "playing", "jogando": "playing", "trabalhando": "working",
+    "estudando": "studying", "cozinhando": "cooking", "dirigindo": "driving",
+    "pilotando": "flying", "pescando": "fishing", "cacando": "hunting",
+    "explorando": "exploring", "viajando": "traveling", "sonhando": "dreaming",
+    "sorrindo": "smiling", "chorando": "crying", "gritando": "shouting",
+    "sussurrando": "whispering", "olhando": "looking", "observando": "watching",
+    "no": "in the", "na": "in the", "em": "in", "sobre": "on",
+    "com": "with", "sem": "without", "para": "for", "de": "of",
+    "um": "a", "uma": "a", "o": "the", "a": "the", "os": "the", "as": "the",
+    "e": "and", "ou": "or", "mas": "but", "muito": "very", "muita": "very",
+    "mais": "more", "menos": "less", "tambem": "also", "ainda": "still",
+    "dentro": "inside", "fora": "outside", "atras": "behind",
+    "frente": "front", "lado": "side", "cima": "top", "baixo": "bottom",
+    "perto": "near", "longe": "far", "junto": "together", "sozinho": "alone",
+}
+
+def traduzir_prompt(prompt):
+    """Traduz palavras conhecidas PT->EN. Mantém o que não conhece (modelo tenta entender)."""
+    palavras = prompt.split()
+    traduzidas = []
+    for p in palavras:
+        # remove pontuação para buscar no dicionário
+        limpa = p.strip('.,;:!?()"\'')
+        traducao = DICIONARIO_PT_EN.get(limpa.lower())
+        if traducao:
+            # preserva a primeira letra maiúscula se a original tiver
+            if p[0].isupper():
+                traducao = traducao.capitalize()
+            traduzidas.append(traducao)
+        else:
+            traduzidas.append(p)
+    return ' '.join(traduzidas)
+
 ESTILOS_POR_NOME = {
     "auto": None,
     "foto": "photorealistic, professional photography, 85mm lens, shallow depth of field, natural golden-hour lighting, film grain",
@@ -92,7 +272,11 @@ def enriquecer_prompt(prompt_usuario, estilo_nome=None):
     if not base:
         base = "uma cena surreal e vibrante, cheia de detalhes"
 
-    texto = base.lower()
+    # TRADUZ o prompt para inglês ANTES de enriquecer
+    base_traduzida = traduzir_prompt(base)
+    print(f"--- Prompt traduzido: {base_traduzida}")
+
+    texto = base_traduzida.lower()
 
     # 1. Estilo manual (seletor do frontend) tem prioridade
     estilo_escolhido = ESTILOS_POR_NOME.get(estilo_nome) if estilo_nome else None
@@ -111,8 +295,8 @@ def enriquecer_prompt(prompt_usuario, estilo_nome=None):
             "vibrant colors, dynamic composition"
         )
 
-    # 2. Monta o prompt final (base + estilo + qualidade)
-    prompt_final = f"{base}, {estilo_escolhido}, {QUALIDADE_BASE}"
+    # 2. Monta o prompt final (base TRADUZIDA + estilo + qualidade)
+    prompt_final = f"{base_traduzida}, {estilo_escolhido}, {QUALIDADE_BASE}"
     print(f"--- Prompt enriquecido: {prompt_final}")
     return prompt_final
 
