@@ -270,7 +270,10 @@
     <script>
         // --- CONFIGURAÇÃO ---
         // Endereço do backend Flask hospedado na Render (ver render.yaml)
-        const URL_DO_BACKEND = "https://autoplaygorund-api.onrender.com/gerar";
+        // Se o site estiver sendo servido pelo próprio Render, usa caminho relativo
+        const URL_DO_BACKEND = (window.location.hostname.includes('onrender.com'))
+            ? '/gerar'
+            : 'https://autoplaygorund-api.onrender.com/gerar';
         const CHAVE_GALERIA = "autoplaygorund_galeria"; // localStorage
 
         // ========== GALERIA ==========

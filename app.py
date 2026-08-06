@@ -3,7 +3,7 @@ import re
 import random
 import urllib.request
 import urllib.parse
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, abort
 from flask_cors import CORS
 from openai import OpenAI
 
@@ -221,6 +221,15 @@ def gerar_imagem():
     except Exception as e:
         print(f"Erro no servidor: {e}")
         return jsonify({"erro": str(e)}), 500
+
+
+@app.route('/')
+def servir_frontend():
+    """Serve o frontend (index.html) — o site fica acessível direto na Render."""
+    try:
+        return send_from_directory(os.path.dirname(os.path.abspath(__file__)), 'index.html')
+    except FileNotFoundError:
+        abort(404)
 
 
 @app.route('/health', methods=['GET'])
