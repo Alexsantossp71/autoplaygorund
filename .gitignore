@@ -1,0 +1,25 @@
+# =========================================
+#  autoplaygorund — .gitignore
+#  Backend Flask + frontend estático
+# =========================================
+
+# Ambiente Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# Segredos — a chave da API NUNCA pode ir pro git
+.env
+.env.*
+!.env.example
+
+# IDE / editores
+.idea/
+.vscode/
+*.swp
+
+# SO
+.DS_Store
+Thumbs.db
