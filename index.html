@@ -3,7 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Arte AI</title>
+    <title>Gerador de Arte AI — Crie imagens com IA grátis</title>
+    <meta name="description" content="Transforme suas ideias em arte: descreva o que quer ver e a inteligência artificial gera uma imagem em segundos. Grátis, sem cadastro.">
+    <meta name="keywords" content="gerador de imagem, IA, inteligência artificial, arte, FLUX, grátis, criar imagem">
+    <meta name="author" content="Alexandre Ramos">
+    <meta property="og:title" content="Gerador de Arte AI">
+    <meta property="og:description" content="Descreva uma ideia e receba uma imagem gerada por IA em segundos. Grátis!">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://autoplaygorund-api.onrender.com/">
+    <meta name="theme-color" content="#007bff">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -239,6 +248,8 @@
             100% { transform: rotate(360deg); }
         }
 
+        #btnVariar:hover { background-color: #5a4bd1 !important; }
+
         #loading-area {
             display: none;
             margin-top: 20px;
@@ -264,7 +275,10 @@
             <option value="minimalista">⬜ Minimalista / Flat</option>
         </select>
         
-        <button onclick="gerarImagem()" id="btnGerar">Criar Imagem</button>
+        <div style="display:flex; gap:10px;">
+            <button onclick="gerarImagem()" id="btnGerar" style="flex:2;">Criar Imagem</button>
+            <button onclick="gerarImagem(true)" id="btnVariar" title="Gera uma variação do mesmo prompt" style="flex:1; background:#6c5ce7;">🎲 Variar</button>
+        </div>
         
         <div id="status"></div>
         <div id="loading-area"><div class="spinner"></div><p>Gerando imagem... isso pode levar alguns segundos.</p></div>
@@ -389,9 +403,15 @@
         });
 
         // ========== GERAÇÃO ==========
-        async function gerarImagem() {
+        async function gerarImagem(variar = false) {
             const prompt = document.getElementById('promptInput').value;
             const estilo = document.getElementById('estiloSelect').value;
+            // botão Variar: exige prompt preenchido e força seed novo
+            if (variar && !prompt.trim()) {
+                document.getElementById('status').innerText = "⚠️ Escreva um prompt para variar!";
+                document.getElementById('status').style.color = "#d9534f";
+                return;
+            }
             const btn = document.getElementById('btnGerar');
             const status = document.getElementById('status');
             const img = document.getElementById('imagem-resultado');
@@ -420,7 +440,7 @@
                     const response = await fetch(URL_DO_BACKEND, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ prompt: prompt, style: estilo, novo: tentativa })
+                        body: JSON.stringify({ prompt: prompt, style: estilo, novo: (variar ? tentativa + 1000 : tentativa) })
                     });
 
                     const data = await response.json();

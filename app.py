@@ -12,6 +12,23 @@ app = Flask(__name__)
 # Habilita CORS para aceitar pedidos do seu GitHub Pages
 CORS(app)
 
+# ---- Rate limit simples (em memória) ----
+# Protege a API pública: 10 gerações/minuto por IP
+from collections import defaultdict
+import time as _time
+_limite_requisicoes = defaultdict(list)
+LIMITE_MAX = int(os.getenv('RATE_LIMIT_MAX', '10'))
+LIMITE_JANELA = int(os.getenv('RATE_LIMIT_WINDOW', '60'))
+
+def rate_limit_ok(ip):
+    agora = _time.time()
+    historico = [t for t in _limite_requisicoes[ip] if agora - t < LIMITE_JANELA]
+    if len(historico) >= LIMITE_MAX:
+        return False
+    historico.append(agora)
+    _limite_requisicoes[ip] = historico
+    return True
+
 # ============================================================
 #  1. Provedor de imagem
 # ============================================================
@@ -389,6 +406,10 @@ def extrair_url_imagem(completion):
 
 @app.route('/gerar', methods=['POST'])
 def gerar_imagem():
+    ip = request.remote_addr or 'desconhecido'
+    if not rate_limit_ok(ip):
+        return jsonify({"erro": "Muitas requisicoes. Aguarde um momento e tente de novo."}), 429
+
     dados = request.json
     prompt_usuario = dados.get('prompt') if dados else None
     estilo_usuario = dados.get('style') if dados else None
@@ -441,14 +462,35 @@ def servir_frontend():
         abort(404)
 
 
+PAGINA_404 = '''<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8">
+<title>404 - Página não encontrada</title>
+<style>body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+.card{background:white;padding:3rem;border-radius:15px;box-shadow:0 10px 25px rgba(0,0,0,0.1);text-align:center;max-width:400px}
+h1{font-size:64px;margin:0;color:#007bff} h2{color:#333} p{color:#666}
+a{display:inline-block;margin-top:15px;padding:10px 24px;background:#007bff;color:white;text-decoration:none;border-radius:8px}
+a:hover{background:#0056b3}</style></head>
+<body><div class="card"><h1>404</h1><h2>Página não encontrada</h2>
+<p>O endereco que voce procurou nao existe.</p>
+<a href="/">Inicio do gerador</a></div></body></html>'''
+
+
+@app.errorhandler(404)
+def pagina_nao_encontrada(e):
+    return PAGINA_404, 404
+
+
 @app.route('/health', methods=['GET'])
 def health():
     """Rota de verificação (a Render usa para saber se o serviço está vivo)."""
+    token_pollinations = bool(os.getenv("POLLINATIONS_TOKEN"))
     return jsonify({
         "status": "ok",
         "provider": PROVIDER,
         "api_key_configured": client is not None,
-        "model": IMAGE_MODEL if PROVIDER == "openrouter" else "pollinations.ai (grátis)"
+        "pollinations_token": token_pollinations,
+        "model": (IMAGE_MODEL if PROVIDER == "openrouter"
+                  else ("FLUX (token ativo)" if token_pollinations else "sana (grátis, sem token)")),
+        "rate_limit": f"{LIMITE_MAX}/min"
     })
 
 
